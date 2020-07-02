@@ -1,12 +1,14 @@
 CREATE TABLE users(
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name TEXT password TEXT
+  name TEXT
+  password TEXT
+  info TEXT
 );
 CREATE TABLE activity(
   id INT AUTO_INCREMENT PRIMARY KEY,
   name TEXT
 );
-CREATE TABLE activity_user(
+CREATE TABLE user_activity(
   id INT AUTO_INCREMENT PRIMARY KEY,
   activity_id INT,
   user_id INT,
@@ -21,7 +23,7 @@ values (1, 'test'),
 insert into activity
 values (1, 'click'),
   (2, 'touch');
-insert into activity_user (activity_id, user_id, occurrence)
+insert into user_activity (activity_id, user_id, occurrence)
 values (1, 1, '2020-10-02'),
   (2, 1, '2020-05-01'),
   (1, 2, '2020-01-02'),
@@ -32,7 +34,7 @@ SELECT a.name AS activity_name,
   MAX(au.occurrence) AS last_occurrence,
   COUNT(*) AS amount
 FROM users AS u
-  JOIN activity_user AS au ON au.activity_id = u.id
+  JOIN user_activity AS au ON au.activity_id = u.id
   JOIN activity AS a ON a.id = au.activity_id
 WHERE MONTH(au.occurrence) = 10
 GROUP BY user_id,

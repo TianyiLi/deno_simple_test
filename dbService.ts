@@ -6,7 +6,7 @@ const client = await new Client().connect({
   hostname: DB_HOST,
   username: USER_NAME,
   password: PASSWORD,
-  port: DB_PORT,
+  port: +DB_PORT,
 });
 
 export default client;

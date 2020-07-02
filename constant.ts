@@ -7,4 +7,5 @@ export const {
   USER_NAME,
   PASSWORD,
   SERVER_PORT,
+  JWT_SECRET,
 } = config();

@@ -1,7 +1,9 @@
-import { Client } from "https://deno.land/x/mysql/mod.ts";
-import { ExecuteResult } from "https://deno.land/x/mysql/src/connection.ts";
-import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
-import { IUser } from "./entities/user.ts";
+import { Client } from 'https://deno.land/x/mysql/mod.ts';
+import { ExecuteResult } from 'https://deno.land/x/mysql/src/connection.ts';
+import * as bcrypt from 'https://deno.land/x/bcrypt/mod.ts';
+import { IUser } from './entities/user.ts';
+import * as log from 'https://deno.land/std/log/mod.ts';
+
 const salt = bcrypt.genSaltSync(10);
 
 interface IQuery<T> extends ExecuteResult {
@@ -15,13 +17,47 @@ type TSignup = {
 
 export function signup(params: TSignup) {
   return async (cli: Client) => {
-    await cli.execute(
-      `
-    INSERT INTO \`users\`(\`name\`, \`password\`) VALUES (?,?);
-    `,
-      [params.username, bcrypt.hashSync(params.password, salt)],
-    );
+    log.debug(params);
+    try {
+      await cli.execute(
+        `
+      INSERT INTO users(name, password, info) VALUES (?,?,'{}');
+      `,
+        [params.username, bcrypt.hashSync(params.password, salt)]
+      );
+    } catch (error) {
+      return false;
+    }
     return true;
+  };
+}
+
+export function nameVerify(name: string) {
+  return async (cli: Client) => {
+    const result: { name: string }[] = await cli.query(
+      `
+    select name from users where name=?
+    `,
+      [name]
+    );
+
+    return !result.length;
+  };
+}
+
+export function getUserInfo(id: number) {
+  return async (cli: Client) => {
+    let result: string[] = await cli.query(
+      `
+    select info from users where id=?`,
+      [id]
+    );
+    try {
+      const _json = JSON.parse(result[0]) as { info: null | object };
+      return _json;
+    } catch (error) {
+      return result[0];
+    }
   };
 }
 
@@ -34,11 +70,13 @@ export function signin({ username, password }: TSignup) {
         from users
         where name=?
       `,
-        [username],
+        [username]
       )) as IQuery<IUser>;
-      console.log(result);
+
       const user = result.rows[0];
-      return bcrypt.compareSync(password, user.password) ? user : false;
+      return bcrypt.compareSync(password, user.password)
+        ? { info: user.info, id: user.id, username: user.name }
+        : false;
     } catch (error) {
       console.error(error);
       throw error;
@@ -46,7 +84,7 @@ export function signin({ username, password }: TSignup) {
   };
 }
 
-export function updateUserInfo(id: IUser["id"], info: string) {
+export function updateUserInfo(id: IUser['id'], info: string) {
   return async (cli: Client) => {
     await cli.execute(
       `
@@ -54,7 +92,7 @@ export function updateUserInfo(id: IUser["id"], info: string) {
     set info=?
     where id=?
     `,
-      [info, id],
+      [info, id]
     );
   };
 }
@@ -78,7 +116,7 @@ export function getActivityReport() {
     MAX(au.occurrence) AS last_occurrence,
     COUNT(*) AS amount
   FROM users AS u
-    JOIN activity_user AS au ON au.activity_id = u.id
+    JOIN user_activity AS au ON au.activity_id = u.id
     JOIN activity AS a ON a.id = au.activity_id
   WHERE MONTH(au.occurrence) = 10
   GROUP BY user_id,
@@ -86,6 +124,23 @@ export function getActivityReport() {
     `)) as IReport;
     return result;
   };
+}
+
+export function createActivity(name: string) {
+  return async (cli: Client) => {
+    await cli.execute(`
+    insert into activity(name) values (?)
+    `, [name])
+  }
+}
+
+export function addUserActivity(userId: number, activityId: number) {
+  return async (cli: Client) => {
+    await cli.execute(`
+      insert into user_activity(activity_id, user_id) values (?, ?)
+    `, [activityId, userId])
+    return true
+  }
 }
 
 export function getActivity() {
