@@ -1,6 +1,10 @@
-import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
+import { config } from "https://deno.land/x/dotenv/mod.ts";
 
-const salt = bcrypt.genSaltSync(10)
-const hash = bcrypt.hashSync('test', salt)
-
-console.log(bcrypt.compareSync('test', hash))
+export const {
+  DB_NAME,
+  DB_HOST,
+  DB_PORT,
+  USER_NAME,
+  PASSWORD,
+  SERVER_PORT,
+} = config();

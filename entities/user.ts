@@ -1,9 +1,9 @@
-  export interface IUser {
-    id: number;
-    name: string;
-    password: string;
-    info: null | unknown;
-  }
+export interface IUser {
+  id: number;
+  name: string;
+  password: string;
+  info: null | unknown;
+}
 
 export interface IActivity {
   id: number;
@@ -12,7 +12,7 @@ export interface IActivity {
 
 export interface IUserActivity {
   id: number;
-  activity_id: IActivity['id'];
-  user_id: IUser['id'];
+  activity_id: IActivity["id"];
+  user_id: IUser["id"];
   occurrence: number;
 }

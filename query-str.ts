@@ -1,17 +1,17 @@
-import { Client } from 'https://deno.land/x/mysql/mod.ts'
-import { ExecuteResult } from 'https://deno.land/x/mysql/src/connection.ts'
-import * as bcrypt from 'https://deno.land/x/bcrypt/mod.ts'
-import { IUser } from './entities/user.ts'
-const salt = bcrypt.genSaltSync(10)
+import { Client } from "https://deno.land/x/mysql/mod.ts";
+import { ExecuteResult } from "https://deno.land/x/mysql/src/connection.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
+import { IUser } from "./entities/user.ts";
+const salt = bcrypt.genSaltSync(10);
 
 interface IQuery<T> extends ExecuteResult {
-  rows: T[]
+  rows: T[];
 }
 
 type TSignup = {
-  username: string
-  password: string
-}
+  username: string;
+  password: string;
+};
 
 export function signup(params: TSignup) {
   return async (cli: Client) => {
@@ -19,10 +19,10 @@ export function signup(params: TSignup) {
       `
     INSERT INTO \`users\`(\`name\`, \`password\`) VALUES (?,?);
     `,
-      [params.username, bcrypt.hashSync(params.password, salt)]
-    )
-    return true
-  }
+      [params.username, bcrypt.hashSync(params.password, salt)],
+    );
+    return true;
+  };
 }
 
 export function signin({ username, password }: TSignup) {
@@ -34,36 +34,39 @@ export function signin({ username, password }: TSignup) {
         from users
         where name=?
       `,
-        [username]
-      )) as IQuery<IUser>
-      console.log(result)
-      const user = result.rows[0]
-      return bcrypt.compareSync(password, user.password) ? user : false
+        [username],
+      )) as IQuery<IUser>;
+      console.log(result);
+      const user = result.rows[0];
+      return bcrypt.compareSync(password, user.password) ? user : false;
     } catch (error) {
-      console.error(error)
-      throw error
+      console.error(error);
+      throw error;
     }
-  }
+  };
 }
 
-export function updateUserInfo(id: IUser['id'], info: string) {
+export function updateUserInfo(id: IUser["id"], info: string) {
   return async (cli: Client) => {
-    await cli.execute(`
+    await cli.execute(
+      `
     update users
     set info=?
     where id=?
-    `, [info, id])
-  }
+    `,
+      [info, id],
+    );
+  };
 }
 
 interface IReport extends ExecuteResult {
   rows: {
-    activity_name: number
-    user_name: number
-    first_occurrence: number
-    last_occurrenct: number
-    amount: number
-  }[]
+    activity_name: number;
+    user_name: number;
+    first_occurrence: number;
+    last_occurrenct: number;
+    amount: number;
+  }[];
 }
 
 export function getActivityReport() {
@@ -80,17 +83,17 @@ export function getActivityReport() {
   WHERE MONTH(au.occurrence) = 10
   GROUP BY user_id,
     activity_id
-    `)) as IReport
-    return result
-  }
+    `)) as IReport;
+    return result;
+  };
 }
 
 export function getActivity() {
   return async (cli: Client) => {
     const result = (await cli.query(`select id, name from activity`)) as {
-      id: number
-      name: string
-    }[]
-    return result
-  }
+      id: number;
+      name: string;
+    }[];
+    return result;
+  };
 }
