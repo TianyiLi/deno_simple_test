@@ -1,26 +1,55 @@
-import { Router } from 'https://deno.land/x/oak/mod.ts';
-import client from './dbService.ts';
-import { getActivityReport, userAuth } from './query-str.ts';
+import { Router, Status, Response } from 'https://deno.land/x/oak/mod.ts'
+import client from './dbService.ts'
+import { getActivityReport, signin, signup } from './query-str.ts'
 
-const router = new Router();
+const router = new Router()
 
-router.post('/auth', async ({ request, response }) => {
-  const { type, value } = await request.body();
+router.get('/api/report', async ({ response }) => {
+  const result = await getActivityReport()(client)
+  response.body = result.rows
+  response.status = 200
+  return
+})
+
+function inValidResponse(response: Response) {
+  response.body = JSON.stringify({ message: 'Invalid Parameters' })
+  response.status = Status.BadRequest
+  return
+}
+
+router.post('/api/signin', async ({ response, request }) => {
+  const { type, value } = await request.body()
   if (type !== 'json') {
-    response.status = 423;
-    return;
+    response.status = Status.Unauthorized
+    response.body = JSON.stringify({ message: 'Unauthorized' })
+    return
   }
-  const users = await userAuth(value.name, value.password)(client);
-  response.body = JSON.stringify({ state: users });
-  response.status = 200;
-  return;
-});
+  const result = await signin(value)(client)
+  if (!result) {
+    response.status = Status.Unauthorized
+    response.body = JSON.stringify({ message: 'Unauthorized' })
+    return
+  }
+  response.status = Status.OK
+  response.body = JSON.stringify(result)
+  return
+})
 
-router.get('/report', async ({ response }) => {
-  const result = await getActivityReport()(client);
-  response.body = result.rows;
-  response.status = 200;
-  return;
-});
+router.post('/api/signup', async ({ request, response }) => {
+  const { type, value } = await request.body()
+  if (type !== 'json') {
+    inValidResponse(response)
+    return
+  }
+  const result = await signup(value)(client)
+  if (result) {
+    response.status = Status.OK
+    response.body = '{}'
+    return
+  }
+  response.body = JSON.stringify({ message: 'name repeat' })
+  response.status = Status.Conflict
+  return
+})
 
-export { router };
+export { router }

@@ -12,7 +12,7 @@ CREATE TABLE activity_user(
   user_id INT,
   occurrence timestamp,
   FOREIGN KEY(activity_id) REFERENCES activity(id),
-  FOREIGN KEY(user_id) REFERENCES user(id)
+  FOREIGN KEY(user_id) REFERENCES users(id)
 );
 insert into users
 values (1, 'test'),
