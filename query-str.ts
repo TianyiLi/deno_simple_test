@@ -1,8 +1,8 @@
-import { Client } from 'https://deno.land/x/mysql/mod.ts';
-import { ExecuteResult } from 'https://deno.land/x/mysql/src/connection.ts';
-import * as bcrypt from 'https://deno.land/x/bcrypt/mod.ts';
-import { IUser } from './entities/user.ts';
-import * as log from 'https://deno.land/std/log/mod.ts';
+import { Client } from "https://deno.land/x/mysql/mod.ts";
+import { ExecuteResult } from "https://deno.land/x/mysql/src/connection.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt/mod.ts";
+import { IUser } from "./entities/user.ts";
+import * as log from "https://deno.land/std/log/mod.ts";
 
 const salt = bcrypt.genSaltSync(10);
 
@@ -18,14 +18,16 @@ type TSignup = {
 export function signup(params: TSignup) {
   return async (cli: Client) => {
     log.debug(params);
+
     try {
       await cli.execute(
         `
       INSERT INTO users(name, password, info) VALUES (?,?,'{}');
       `,
-        [params.username, bcrypt.hashSync(params.password, salt)]
+        [params.username, bcrypt.hashSync(params.password, salt)],
       );
     } catch (error) {
+      log.debug(error.message);
       return false;
     }
     return true;
@@ -38,7 +40,7 @@ export function nameVerify(name: string) {
       `
     select name from users where name=?
     `,
-      [name]
+      [name],
     );
 
     return !result.length;
@@ -50,7 +52,7 @@ export function getUserInfo(id: number) {
     let result: string[] = await cli.query(
       `
     select info from users where id=?`,
-      [id]
+      [id],
     );
     try {
       const _json = JSON.parse(result[0]) as { info: null | object };
@@ -70,8 +72,12 @@ export function signin({ username, password }: TSignup) {
         from users
         where name=?
       `,
-        [username]
+        [username],
       )) as IQuery<IUser>;
+
+      if (!result.rows.length) {
+        return false;
+      }
 
       const user = result.rows[0];
       return bcrypt.compareSync(password, user.password)
@@ -84,7 +90,7 @@ export function signin({ username, password }: TSignup) {
   };
 }
 
-export function updateUserInfo(id: IUser['id'], info: string) {
+export function updateUserInfo(id: IUser["id"], info: string) {
   return async (cli: Client) => {
     await cli.execute(
       `
@@ -92,7 +98,7 @@ export function updateUserInfo(id: IUser['id'], info: string) {
     set info=?
     where id=?
     `,
-      [info, id]
+      [info, id],
     );
   };
 }
@@ -102,8 +108,9 @@ interface IReport extends ExecuteResult {
     activity_name: number;
     user_name: number;
     first_occurrence: number;
-    last_occurrenct: number;
+    last_occurrence: number;
     amount: number;
+    id: number;
   }[];
 }
 
@@ -128,19 +135,25 @@ export function getActivityReport() {
 
 export function createActivity(name: string) {
   return async (cli: Client) => {
-    await cli.execute(`
+    await cli.execute(
+      `
     insert into activity(name) values (?)
-    `, [name])
-  }
+    `,
+      [name],
+    );
+  };
 }
 
 export function addUserActivity(userId: number, activityId: number) {
   return async (cli: Client) => {
-    await cli.execute(`
+    await cli.execute(
+      `
       insert into user_activity(activity_id, user_id) values (?, ?)
-    `, [activityId, userId])
-    return true
-  }
+    `,
+      [activityId, userId],
+    );
+    return true;
+  };
 }
 
 export function getActivity() {

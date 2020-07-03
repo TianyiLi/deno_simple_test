@@ -1,4 +1,5 @@
 import { Database, Model } from "https://deno.land/x/denodb/mod.ts";
+import { DB_NAME, DB_HOST, USER_NAME, PASSWORD, DB_PORT } from "./constant";
 
 class DatabaseService {
   db: Database;
@@ -7,11 +8,11 @@ class DatabaseService {
     this.db = new Database(
       { dialect: "mysql", debug: true },
       {
-        database: "bill",
-        host: "192.168.72.128",
-        username: "root",
-        password: "root",
-        port: 3300,
+        database: DB_NAME,
+        host: DB_HOST,
+        username: USER_NAME,
+        password: PASSWORD,
+        port: DB_PORT,
       },
     );
   }

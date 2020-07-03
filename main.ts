@@ -6,8 +6,9 @@ import {
 
 import { router } from "./route.ts";
 
+import { oakCors } from "https://deno.land/x/cors/mod.ts";
 const app = new Application();
-
+app.use(oakCors());
 app.use(router.routes());
 app.use(router.allowedMethods());
 app.use(async (ctx, next) => {
@@ -28,6 +29,5 @@ app.use(async (ctx, next) => {
     throw error;
   }
 });
-
 console.log(`app listen on ${"127.0.0.1"}:${8999}`);
 await app.listen(`127.0.0.1:8999`);
